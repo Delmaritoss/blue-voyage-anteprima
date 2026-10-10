@@ -118,12 +118,16 @@
         if (++n > 20) clearInterval(ping);
       }, 250);
     });
+    var playing = false, shown = false;
     window.addEventListener('message', function (e) {
       if (e.source !== f.contentWindow || typeof e.data !== 'string') return;
       var m; try { m = JSON.parse(e.data); } catch (err) { return; }
       var info = m.info || {};
-      if (info.playerState === 1) yt.classList.add('on');
-      if (info.playerState === 2) yt.classList.remove('on');
+      // video se pokaže tek nakon ~3 s reprodukcije: YouTube tada već šalje oštru sliku i makne svoj gumb za play;
+      // do tada se vidi poster. Kad je jednom prikazan, ostaje (i nakon povratka na početak isječka).
+      if (info.playerState === 1) playing = true;
+      if (info.playerState === 2) { playing = false; yt.classList.remove('on'); }
+      if (playing && (shown || (info.currentTime && info.currentTime >= ys + 3))) { shown = true; yt.classList.add('on'); }
       if (info.playerState === 0 || (info.currentTime && info.currentTime >= ye - 0.3)) { cmd('seekTo', [ys, true]); cmd('playVideo'); }
     });
     d.addEventListener('visibilitychange', function () { cmd(d.hidden ? 'pauseVideo' : 'playVideo'); });
