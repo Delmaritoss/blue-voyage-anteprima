@@ -26,6 +26,33 @@
   };
   var TXT = I18N[LANG] || I18N.en;
 
+  /* mobilni izbornik */
+  function setMenu(open) {
+    body.classList.toggle('menu-open', open);
+    body.style.overflow = open ? 'hidden' : '';
+    d.querySelectorAll('.burger').forEach(function (b) { b.setAttribute('aria-expanded', open ? 'true' : 'false'); });
+    if (open) { var x = d.querySelector('.mnav-x'); if (x) x.focus(); }
+  }
+  d.querySelectorAll('.burger').forEach(function (b) { b.addEventListener('click', function () { setMenu(true); }); });
+  d.querySelectorAll('.mnav-x, .mnav a').forEach(function (b) { b.addEventListener('click', function () { setMenu(false); }); });
+  d.addEventListener('keydown', function (e) { if (e.key === 'Escape' && body.classList.contains('menu-open')) setMenu(false); });
+
+  /* padajući izbornici: na dodir prvi klik otvara, drugi vodi na stranicu */
+  d.querySelectorAll('.nav > li').forEach(function (li) {
+    var a = li.querySelector('.nav-a'), drop = li.querySelector('.drop');
+    if (!a || !drop) return;
+    a.addEventListener('click', function (e) {
+      if (matchMedia('(hover: none)').matches && !li.classList.contains('open')) {
+        e.preventDefault();
+        d.querySelectorAll('.nav > li.open').forEach(function (o) { o.classList.remove('open'); });
+        li.classList.add('open');
+      }
+    });
+  });
+  d.addEventListener('click', function (e) {
+    if (!e.target.closest('.nav')) d.querySelectorAll('.nav > li.open').forEach(function (o) { o.classList.remove('open'); });
+  });
+
   /* zaglavlje: zatamni se pri pomicanju, skrije se prema dolje, vrati prema gore;
      traka napretka, gumb za vrh, paralaksa — sve u jednom requestAnimationFrame */
   var head = d.querySelector('.head');
@@ -198,46 +225,33 @@
     rise.querySelectorAll('.r1, .r2').forEach(function (s) { s.classList.add('split-in'); });
   }
 
-  /* prvi tjedan na Kvarneru: pomicanje crta rutu dan po dan */
+  /* prvi tjedan na Kvarneru: cijela ruta je nacrtana; dan se bira gumbima 1–7, strelicama
+     ili klikom na luku na karti — istakne se taj dio rute i pokaže kartica tog dana */
   var vy = d.querySelector('[data-voyage]');
-  if (vy && !reduce && 'getTotalLength' in SVGPathElement.prototype) {
+  if (vy) {
     vy.classList.add('live');
-    var legs = Array.prototype.map.call(vy.querySelectorAll('.vy-route path'), function (p) {
-      var L = p.getTotalLength(); p.style.strokeDasharray = L; p.style.strokeDashoffset = L; return { el: p, L: L };
-    });
-    var cardsV = vy.querySelectorAll('.vy-card'), dotsV = vy.querySelectorAll('.vy-dots i'), ports = vy.querySelectorAll('.vy-port');
-    var boat = vy.querySelector('.vy-boat'), N = legs.length, cur = -1, want = 0, shown = 0, vyRun = false;
-    function vyMeasure() {
-      var top = vy.getBoundingClientRect().top, span = vy.offsetHeight - window.innerHeight;
-      // malo "praznog hoda" na početku i kraju da prvi i zadnji dan stignu biti pročitani
-      want = Math.max(0, Math.min(1, (-top / span - 0.04) / 0.88)) * N;
-      if (!vyRun && Math.abs(want - shown) > 0.0005 && top < window.innerHeight && top > -vy.offsetHeight) { vyRun = true; requestAnimationFrame(vyTick); }
-    }
-    function vyTick() {
-      shown += (want - shown) * 0.14;
-      if (Math.abs(want - shown) < 0.001) shown = want;
-      legs.forEach(function (g, i) { var f = Math.max(0, Math.min(1, shown - i)); g.el.style.strokeDashoffset = (g.L * (1 - f)).toFixed(1); });
-      var li = Math.min(N - 1, Math.floor(shown)), lf = Math.min(1, shown - li), g = legs[li];
-      var pt = g.el.getPointAtLength(g.L * lf);
-      boat.setAttribute('transform', 'translate(' + pt.x.toFixed(1) + ',' + pt.y.toFixed(1) + ')');
-      var day = Math.min(N - 1, Math.floor(shown + 0.02));
-      if (day !== cur) {
-        cur = day;
-        cardsV.forEach(function (c, i) { c.classList.toggle('on', i === day); c.setAttribute('aria-hidden', i === day ? 'false' : 'true'); });
-        dotsV.forEach(function (x, i) { x.classList.toggle('on', i <= day); });
-      }
+    var nav = vy.querySelector('.vy-nav'); nav.hidden = false;
+    var cardsV = vy.querySelectorAll('.vy-card'), dayB = nav.querySelectorAll('.vy-days button'), legsV = vy.querySelectorAll('.vy-route path');
+    var ports = vy.querySelectorAll('.vy-port'), N = cardsV.length, cur = 0;
+    function pick(day, focus) {
+      cur = (day + N) % N;
+      cardsV.forEach(function (c, i) { c.classList.toggle('on', i === cur); c.setAttribute('aria-hidden', i === cur ? 'false' : 'true'); });
+      dayB.forEach(function (x, i) { x.setAttribute('aria-pressed', i === cur ? 'true' : 'false'); });
+      if (focus) dayB[cur].focus();
+      legsV.forEach(function (p, i) { p.classList.toggle('sel', i === cur); });
       ports.forEach(function (p) {
-        var s = parseInt(p.getAttribute('data-stop'), 10);
-        p.classList.toggle('on', s < 0 || shown >= s + 0.97);
-        p.classList.toggle('now', s === day && shown >= s + 0.97 || s < 0 && (shown < 0.03 || shown > N - 0.03));
+        var st = parseInt(p.getAttribute('data-stop'), 10);
+        p.classList.add('on');
+        p.classList.toggle('now', st === cur || (st < 0 && (cur === 0 || cur === N - 1)));
       });
-      if (shown !== want) requestAnimationFrame(vyTick); else vyRun = false;
     }
-    window.addEventListener('scroll', vyMeasure, { passive: true });
-    window.addEventListener('resize', vyMeasure);
-    vyMeasure(); shown = want - 0.0001; vyRun = true; requestAnimationFrame(vyTick);
-  } else if (vy) {
-    vy.querySelectorAll('.vy-port').forEach(function (p) { p.classList.add('on'); });
+    dayB.forEach(function (x, i) { x.addEventListener('click', function () { pick(i); }); });
+    nav.querySelectorAll('.vy-step').forEach(function (x) { x.addEventListener('click', function () { pick(cur + parseInt(x.getAttribute('data-step'), 10)); }); });
+    nav.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { e.preventDefault(); pick(cur + (e.key === 'ArrowRight' ? 1 : -1), true); }
+    });
+    ports.forEach(function (p) { p.addEventListener('click', function () { pick(Math.max(0, parseInt(p.getAttribute('data-stop'), 10))); }); });
+    pick(0);
   }
 
   /* izbornik jezika */

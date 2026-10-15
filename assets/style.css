@@ -1022,41 +1022,44 @@ td:first-child{font-weight:400;color:var(--navy)}
 
 .voyage:not(.live) .voyage-in{align-items:start}
 .voyage:not(.live) .voyage-map{position:sticky;top:calc(var(--head) + 24px)}
-/* živi način */
-.voyage.live{height:calc(100vh + 7 * 70vh)}
-.voyage.live .voyage-stage{position:sticky;top:0;height:100vh;height:100svh;padding:calc(var(--head) + 10px) 0 28px;display:flex;align-items:center;overflow:hidden}
-.voyage.live .voyage-in{width:100%;height:100%;grid-template-rows:minmax(0,1fr)}
-.voyage.live .vy-cards{display:grid;grid-template-areas:"c";gap:0}
-.voyage.live .vy-card{grid-area:c;opacity:0;transform:translateY(16px);transition:opacity .5s var(--ease),transform .7s var(--ease-out);pointer-events:none}
+/* odabir dana: cijela ruta je nacrtana, odabrani dan se istakne */
+.voyage.live .vy-cards{display:grid;grid-template-areas:"c";gap:0;margin-top:22px}
+.voyage.live .vy-card{grid-area:c;opacity:0;transform:translateY(10px);transition:opacity .4s var(--ease),transform .5s var(--ease-out);pointer-events:none}
 .voyage.live .vy-card.on{opacity:1;transform:none;pointer-events:auto}
-.voyage.live .vy-dots{display:flex}
-.voyage.live .vy-boat{display:block}
-.voyage.live .voyage-map{height:100%;display:flex;align-items:center}
-.voyage.live .voyage-map svg{height:100%;max-height:none;width:auto;max-width:100%;margin:0 auto}
-.vy-halo{animation:vy-pulse 2.4s ease-in-out infinite}
-@keyframes vy-pulse{50%{opacity:.45}}
+.vy-nav{display:flex;align-items:center;gap:10px;margin-top:34px}
+.vy-nav[hidden]{display:none}
+.vy-days{display:flex;gap:6px;flex-wrap:wrap}
+.vy-days button,.vy-step{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;border:1px solid rgba(201,163,95,.4);color:var(--white);font:500 14px/1 var(--sans);transition:background .25s,border-color .25s,color .25s}
+.vy-days button:hover,.vy-step:hover{border-color:var(--gold)}
+.vy-days button[aria-pressed=true]{background:var(--gold);border-color:var(--gold);color:var(--navy)}
+.vy-step{border-color:transparent;color:var(--gold-2)}
+.vy-step svg{width:18px;height:18px}
+.voyage.live .vy-route path{opacity:.4;stroke-width:2.4;transition:opacity .35s,stroke-width .35s}
+.voyage.live .vy-route path.sel{opacity:1;stroke-width:4}
+.vy-port{cursor:pointer}
+.vy-port .vy-hit,.vy-port.on .vy-hit,.vy-port.now .vy-hit{fill:transparent;fill-opacity:0;stroke:none}
+.vy-port circle:not(.vy-hit){transition:transform .3s var(--ease-out),fill .3s}
+.vy-port.now circle:not(.vy-hit){transform:scale(1.5);fill:var(--gold-2)}
+.vy-port:hover text{fill:var(--gold-2)}
 
 @media (max-width:880px){
-  .voyage-in{grid-template-columns:1fr}
+  .voyage-in{grid-template-columns:minmax(0,1fr)}
   .voyage-map{order:-1;max-width:520px;margin:0 auto;width:100%}
   .voyage:not(.live) .voyage-map{position:relative;top:0}
   .voyage-map svg{max-height:70vh}
-  .voyage.live{height:calc(100svh + 7 * 60svh)}
-  .voyage.live .voyage-stage{padding:calc(var(--head) - 8px) 0 18px}
-  .voyage.live .voyage-in{display:flex;flex-direction:column;gap:12px}
-  .voyage.live .voyage-copy{display:contents}
-  .voyage.live .voyage-head{order:-2}
-  .voyage.live .voyage-head .eyebrow{margin-bottom:8px}
-  .voyage.live .voyage-head h2{font-size:30px}
-  .voyage.live .voyage-head .lead,.voyage.live .vy-note{display:none}
-  .voyage.live .voyage-map{order:-1;flex:1 1 auto;min-height:0;height:auto;max-width:none}
-  .voyage.live .voyage-map svg{width:100%;height:100%}
-  .voyage.live .vy-cards{margin:0}
-  .voyage.live .vy-card h3{font-size:24px;margin-bottom:6px}
-  .voyage.live .vy-card p{font-size:14.5px;line-height:1.5}
-  .voyage.live .vy-foot{margin-top:4px;justify-content:space-between;gap:12px}
-  .voyage.live .vy-foot .btn{min-height:44px;padding:0 16px;font-size:11px;letter-spacing:.12em}
-  .voyage.live .vy-dots i{width:14px}
+  .voyage.live .vy-card p{font-size:15px;line-height:1.55}
+  /* telefon: naslov, pa karta, pa kartica dana odmah ispod — karta i tekst vide se zajedno */
+  .voyage-copy{display:contents}
+  .voyage-head{order:1}
+  .voyage-map{order:2;margin-top:6px}
+  .vy-nav{order:3;margin-top:18px;justify-content:center}
+  .vy-cards{order:4}
+  .vy-foot{order:5;margin-top:22px}
+  .vy-note{order:6;margin-top:4px}
+  .vy-days{gap:4px}
+  .vy-days button,.vy-step{width:34px;height:34px}
+  .voyage.live .voyage-map svg{max-height:56svh;margin:0 auto}
+  .voyage.live .vy-cards{margin-top:16px}
 }
 
 /* ═══ USPOREDBA PLOVILA ═════════════════════════════════════════════ */
